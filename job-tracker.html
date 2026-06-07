@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <!-- This line makes the app fit your phone screen properly -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Job Tracker</title>
+
+  <!-- ============================================================
+       STYLES
+       This section controls how everything looks —
+       colors, spacing, fonts, button styles, etc.
+  ============================================================ -->
+  <style>
+
+    /* --- Base reset: removes default browser spacing --- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* --- Main page style --- */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f0;
+      color: #1a1a1a;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    /* --- Top bar that shows the app name --- */
+    .app-bar {
+      background: #1a1a1a;
+      color: #ffffff;
+      padding: 16px 20px;
+      font-size: 17px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+    }
+
+    /* --- Main content area with breathing room on the sides --- */
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 20px 16px;
+    }
+
+    /* ============================================================
+       CALENDAR SCREEN
+       This is the first thing you see when you open the app
+    ============================================================ */
+
+    /* --- Month label at the top of the calendar --- */
+    .cal-month-label {
+      font-size: 20px;
+      font-weight: 500;
+      color: #1a1a1a;
+      margin-bottom: 16px;
+    }
+
+    /* --- Row of day-of-week labels (Sun, Mon, Tue...) --- */
+    .day-labels {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+      margin-bottom: 4px;
+    }
+
+    .day-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #888;
+      text-align: center;
+      padding: 4px 0;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    /* --- The 7-column grid that holds all the day cells --- */
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+
+    /* --- Each individual day cell --- */
+    .cal-day {
+      min-height: 60px;
+      background: #ffffff;
+      border: 1px solid #e8e8e4;
+      border-radius: 8px;
+      padding: 6px;
+      cursor: default;
+    }
+
+    /* --- A day that has a job on it gets a pointer cursor --- */
+    .cal-day.has-job {
+      cursor: pointer;
+    }
+
+    /* --- Hover effect for days with jobs --- */
+    .cal-day.has-job:hover {
+      border-color: #1a1a1a;
+    }
+
+    /* --- Today gets a highlighted border --- */
+    .cal-day.today {
+      border-color: #4a90d9;
+    }
+
+    /* --- Empty cells (before the 1st of the month) --- */
+    .cal-day.empty {
+      background: transparent;
+      border-color: transparent;
+    }
+
+    /* --- The number in the top corner of each day --- */
+    .day-num {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    /* --- Today's number is blue --- */
+    .cal-day.today .day-num {
+      color: #4a90d9;
+      font-weight: 600;
+    }
+
+    /* --- The colored chip that shows a job name on the calendar --- */
+    .job-chip {
+      font-size: 11px;
+      background: #1a1a1a;
+      color: #ffffff;
+      border-radius: 4px;
+      padding: 2px 5px;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* --- The "Add Job" button --- */
+    .btn-primary {
+      background: #1a1a1a;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 16px;
+    }
+
+    .btn-primary:hover {
+      background: #333;
+    }
+
+    /* --- Secondary button (Cancel, Back) --- */
+    .btn-secondary {
+      background: transparent;
+      color: #1a1a1a;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 16px;
+      margin-left: 8px;
+    }
+
+    /* --- The small form that appears when adding a new job --- */
+    .add-job-form {
+      display: none;
+      background: #ffffff;
+      border: 1px solid #e8e8e4;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .add-job-form label {
+      display: block;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 4px;
+      margin-top: 12px;
+    }
+
+    .add-job-form input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #1a1a1a;
+      background: #fafafa;
+    }
+
+    /* ============================================================
+       JOB SHEET SCREEN
+       This appears when you tap a day with a job on it
+    ============================================================ */
+
+    /* --- Top bar on the job sheet with back arrow and job name --- */
+    .job-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .back-btn {
+      background: transparent;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .job-title {
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .job-date {
+      font-size: 13px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    /* --- The small detail fields (contact, phone, address, crew) --- */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .meta-field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .meta-field input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #ddd;
+      font-size: 14px;
+      color: #1a1a1a;
+      padding: 4px 0;
+      outline: none;
+    }
+
+    .meta-field input:focus {
+      border-bottom-color: #1a1a1a;
+    }
+
+    /* --- The row of tabs (Tasks, Tools, Shopping, On Hand) --- */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      font-size: 13px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background: transparent;
+      color: #666;
+      cursor: pointer;
+    }
+
+    /* --- The currently selected tab --- */
+    .tab-btn.active {
+      background: #1a1a1a;
+      color: #ffffff;
+      border-color: #1a1a1a;
+    }
+
+    /* --- Each tab's content area. Hidden by default. --- */
+    .tab-panel {
+      display: none;
+    }
+
+    /* --- The visible tab panel --- */
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* --- Section headers inside the task list (e.g. "Demo", "Framing") --- */
+    .section-heading {
+      font-size: 11px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin: 20px 0 6px;
+    }
+
+    /* --- A single task or tool row with a checkbox --- */
+    .check-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid #f0f0ec;
+      font-size: 14px;
+      color: #1a1a1a;
+    }
+
+    .check-row input[type="checkbox"] {
+      width: 17px;
+      height: 17px;
+      margin-top: 2px;
+      flex-shrink: 0;
+      cursor: pointer;
+      accent-color: #1a1a1a;
+    }
+
+    /* --- Strike through text when a row is checked --- */
+    .check-row.done span {
+      text-decoration: line-through;
+      color: #bbb;
+    }
+
+    /* --- Small green badge on items that need confirming --- */
+    .confirm-badge {
+      font-size: 11px;
+      background: #e6f4ea;
+      color: #2d7a3a;
+      border-radius: 4px;
+      padding: 1px 6px;
+      margin-left: 6px;
+      white-space: nowrap;
+    }
+
+    /* --- Shopping list: doors count input --- */
+    .unit-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .unit-row input {
+      width: 54px;
+      text-align: center;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    /* --- Section divider in the shopping list --- */
+    .list-section-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #666;
+      border-bottom: 1px solid #e8e8e4;
+      padding-bottom: 6px;
+      margin: 16px 0 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* --- Count bubbles next to section labels --- */
+    .count-pill {
+      font-size: 11px;
+      padding: 1px 8px;
+      border-radius: 20px;
+    }
+
+    .count-pill.need {
+      background: #fff3e0;
+      color: #b45309;
+    }
+
+    .count-pill.have {
+      background: #e6f4ea;
+      color: #2d7a3a;
+    }
+
+    /* --- A shopping list row --- */
+    .shop-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid #f0f0ec;
+      font-size: 14px;
+    }
+
+    .shop-row input[type="checkbox"] {
+      width: 17px;
+      height: 17px;
+      flex-shrink: 0;
+      cursor: pointer;
+      accent-color: #1a1a1a;
+    }
+
+    .shop-row .item-name {
+      flex: 1;
+      color: #1a1a1a;
+    }
+
+    /* --- Crossed out when checked --- */
+    .shop-row.done .item-name {
+      text-decoration: line-through;
+      color: #bbb;
+    }
+
+    .shop-row .qty-label {
+      font-size: 13px;
+      color: #888;
+    }
+
+    /* --- Notes textarea at the bottom of the Tasks tab --- */
+    .notes-area {
+      width: 100%;
+      min-height: 80px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 14px;
+      color: #1a1a1a;
+      background: #fafafa;
+      resize: vertical;
+      margin-top: 8px;
+      font-family: inherit;
+    }
+
+    /* --- Helper text shown above some tab panels --- */
+    .helper-text {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 14px;
+    }
+
+    /* --- Screens: only one is visible at a time --- */
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       TOP BAR — always visible
+  ============================================================ -->
+  <div class="app-bar">Job Tracker</div>
+
+  <!-- ============================================================
+       CALENDAR SCREEN
+       Shown first. Lists all jobs for the month.
+  ============================================================ -->
+  <div id="screen-calendar" class="screen active">
+    <div class="container">
+
+      <p class="cal-month-label">June 2026</p>
+
+      <!-- Day of week headers -->
+      <div class="day-labels">
+        <div class="day-label">Sun</div>
+        <div class="day-label">Mon</div>
+        <div class="day-label">Tue</div>
+        <div class="day-label">Wed</div>
+        <div class="day-label">Thu</div>
+        <div class="day-label">Fri</div>
+        <div class="day-label">Sat</div>
+      </div>
+
+      <!-- Calendar grid — filled in by JavaScript below -->
+      <div class="cal-grid" id="cal-grid"></div>
+
+      <!-- Add job button -->
+      <button class="btn-primary" onclick="showAddJobForm()">+ Add job</button>
+
+      <!-- Add job form (hidden until button is tapped) -->
+      <div class="add-job-form" id="add-job-form">
+        <label for="new-job-name">Job name</label>
+        <input type="text" id="new-job-name" placeholder="e.g. Window install — Unit 4" />
+        <label for="new-job-date">Date</label>
+        <input type="date" id="new-job-date" min="2026-06-01" max="2026-06-30" value="2026-06-15" />
+        <div>
+          <button class="btn-primary" onclick="addNewJob()">Add job</button>
+          <button class="btn-secondary" onclick="hideAddJobForm()">Cancel</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================
+       JOB SHEET SCREEN
+       Opens when you tap a day with a job
+  ============================================================ -->
+  <div id="screen-job" class="screen">
+    <div class="container">
+
+      <!-- Back button + job name -->
+      <div class="job-header">
+        <button class="back-btn" onclick="goToCalendar()">&#8592; June</button>
+        <div>
+          <div class="job-title" id="job-title-display"></div>
+          <div class="job-date" id="job-date-display"></div>
+        </div>
+      </div>
+
+      <!-- Job detail fields -->
+      <div class="meta-grid">
+        <div class="meta-field">
+          <label>Contact</label>
+          <input type="text" id="field-contact" placeholder="Name" />
+        </div>
+        <div class="meta-field">
+          <label>Phone</label>
+          <input type="text" id="field-phone" placeholder="Number" />
+        </div>
+        <div class="meta-field">
+          <label>Address</label>
+          <input type="text" id="field-address" placeholder="Address" />
+        </div>
+        <div class="meta-field">
+          <label>Crew</label>
+          <input type="text" id="field-crew" value="2 people, 4 hours" />
+        </div>
+      </div>
+
+      <!-- Tab buttons — 3 tabs now -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('tasks')">Tasks</button>
+        <button class="tab-btn" onclick="showTab('truck')">On the truck</button>
+        <button class="tab-btn" onclick="showTab('shopping')">Shopping</button>
+      </div>
+
+      <!-- TASKS TAB -->
+      <div class="tab-panel active" id="tab-tasks">
+        <div id="task-list"></div>
+        <p class="section-heading" style="margin-top: 20px;">Notes</p>
+        <textarea class="notes-area" placeholder="Job notes..."></textarea>
+      </div>
+
+      <!-- ON THE TRUCK TAB — Tools, Materials, PPE -->
+      <div class="tab-panel" id="tab-truck">
+        <p class="helper-text">Confirm everything is loaded before leaving.</p>
+
+        <p class="section-heading">Tools</p>
+        <div id="tool-list"></div>
+
+        <p class="section-heading" style="margin-top: 24px;">Materials</p>
+        <div id="onhand-list"></div>
+
+        <p class="section-heading" style="margin-top: 24px;">PPE</p>
+        <div id="ppe-list"></div>
+      </div>
+
+      <!-- SHOPPING LIST TAB -->
+      <div class="tab-panel" id="tab-shopping">
+        <div class="unit-row">
+          <span>Number of doors:</span>
+          <input type="number" id="door-count" value="1" min="1" max="20" onchange="renderShoppingList()" />
+        </div>
+        <div id="shopping-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       JAVASCRIPT
+       This is the brain of the app — it handles all the logic:
+       drawing the calendar, opening jobs, checking off items, etc.
+  ============================================================ -->
+  <script>
+
+    // ============================================================
+    // DATA — the lists that power the app
+    // ============================================================
+
+    // The jobs that appear on the calendar.
+    // Each job has a name and a day number (1–30 for June).
+    const jobs = [
+      { name: "Front door install", day: 8 }
+    ];
+
+    // Task checklist broken into phases.
+    // Each phase has a title and a list of steps.
+    const taskSections = [
+      {
+        title: "Pre-install inspection",
+        items: [
+          "Measure rough opening",
+          "Confirm door size matches opening",
+          "Check header and framing condition",
+          "Note if demo will be needed"
+        ]
+      },
+      {
+        title: "Demo",
+        items: [
+          "Remove old casing and trim",
+          "Demo door frame",
+          "Remove threshold if necessary",
+          "Clear debris from opening"
+        ]
+      },
+      {
+        title: "Framing and prep",
+        items: [
+          "Check header — level and solid",
+          "Shim hinge side plumb",
+          "Tape off openings",
+          "Spray foam gaps"
+        ]
+      },
+      {
+        title: "Hang the door",
+        items: [
+          "Install sill seal",
+          "Set threshold",
+          "Shim and hang door on hinge side",
+          "Flush to interior wall with jam extenders",
+          "Level top — shim to header using reveal as guide",
+          "Shim latch side using reveal as guide"
+        ]
+      },
+      {
+        title: "Exterior finish",
+        items: [
+          "Confirm brick mold has adequate attachment space",
+          "Flash exterior",
+          "Caulk exterior perimeter"
+        ]
+      },
+      {
+        title: "Interior finish",
+        items: [
+          "Install casing",
+          "Nail filler",
+          "Final check — door swings and latches correctly"
+        ]
+      }
+    ];
+
+    // Tools checklist — same every job, just confirm they're in the truck.
+    const toolsList = [
+      "Miter saw + batteries",
+      "Pin nailer + nails",
+      "Circular saw",
+      "Cut-off tool + blades",
+      "Trim screws + bits",
+      "Framing screws + bits",
+      "Screwdriver / impact",
+      "2, 4, 6 ft levels",
+      "Square",
+      "Tape measures",
+      "Hammers",
+      "Trim puller",
+      "Pry bars",
+      "Snips",
+      "Pencil / knife"
+    ];
+
+    // Shopping list materials.
+    // perUnit: true = quantity multiplies by number of doors
+    // needsConfirm: true = shows a "confirm size" badge
+    const shoppingItems = [
+      { name: "Door + latch",        perUnit: true,  needsConfirm: true  },
+      { name: "Jam extenders",       perUnit: true,  needsConfirm: false },
+      { name: "Casing",              perUnit: true,  needsConfirm: false },
+      { name: "Flashing",            perUnit: true,  needsConfirm: true  },
+      { name: "Shims (pack)",        perUnit: true,  needsConfirm: false },
+      { name: "Sill seal",           perUnit: true,  needsConfirm: false },
+      { name: "Spray foam",          perUnit: true,  needsConfirm: false },
+      { name: "Caulk + gun + rags",  perUnit: false, needsConfirm: false },
+      { name: "Nail filler",         perUnit: false, needsConfirm: false },
+      { name: "Tape",                perUnit: false, needsConfirm: false }
+    ];
+
+    // Materials on hand — consumables you keep stocked on the truck.
+    const onhandItems = [
+      "Trim screws + bits",
+      "Framing screws + bits",
+      "Pin nailer nails",
+      "Pencil / knife",
+      "Hammers",
+      "Pry bars",
+      "Trim puller",
+      "Snips"
+    ];
+
+    // PPE — safety gear, confirm before every job.
+    const ppeItems = [
+      "Masks",
+      "Safety glasses",
+      "Ear protection",
+      "Gloves",
+      "Water",
+      "Shade tent"
+    ];
+
+
+    // ============================================================
+    // STATE — tracks what's been checked off
+    // ============================================================
+
+    // taskChecked stores true/false for each task.
+    // The key is "Phase Title|Task Name" so each task is unique.
+    const taskChecked = {};
+
+    // toolChecked stores true/false for each tool by its index number.
+    const toolChecked = toolsList.map(() => false);
+
+    // shopChecked stores true/false for each shopping item by index.
+    const shopChecked = shoppingItems.map(() => false);
+
+    // onhandChecked stores true/false for each on-hand item by index.
+    const onhandChecked = onhandItems.map(() => false);
+
+    // ppeChecked stores true/false for each PPE item by index.
+    const ppeChecked = ppeItems.map(() => false);
+
+    // Tracks which job is currently open.
+    let activeJob = null;
+
+
+    // ============================================================
+    // CALENDAR — draws the grid and adds job chips
+    // ============================================================
+
+    function renderCalendar() {
+      const grid = document.getElementById('cal-grid');
+      grid.innerHTML = '';
+
+      // June 2026 starts on a Monday (day index 1, where Sunday = 0).
+      // We add 1 empty cell to push the 1st to the correct column.
+      const startOffset = 1;
+      for (let i = 0; i < startOffset; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'cal-day empty';
+        grid.appendChild(empty);
+      }
+
+      // Draw each day of June (1 through 30)
+      for (let day = 1; day <= 30; day++) {
+
+        const cell = document.createElement('div');
+        cell.className = 'cal-day';
+
+        // June 5 is today
+        if (day === 5) {
+          cell.classList.add('today');
+        }
+
+        // Check if any jobs are scheduled on this day
+        const jobsOnThisDay = jobs.filter(job => job.day === day);
+
+        if (jobsOnThisDay.length > 0) {
+          cell.classList.add('has-job');
+          // Tapping a day with a job opens that job's sheet
+          cell.onclick = () => openJob(jobsOnThisDay[0]);
+        }
+
+        // Build the cell's inner HTML: day number + job chips
+        cell.innerHTML = `
+          <div class="day-num">${day}</div>
+          ${jobsOnThisDay.map(job => `<div class="job-chip">${job.name}</div>`).join('')}
+        `;
+
+        grid.appendChild(cell);
+      }
+    }
+
+
+    // ============================================================
+    // ADD JOB FORM — shows and hides the form below the calendar
+    // ============================================================
+
+    function showAddJobForm() {
+      document.getElementById('add-job-form').style.display = 'block';
+    }
+
+    function hideAddJobForm() {
+      document.getElementById('add-job-form').style.display = 'none';
+    }
+
+    function addNewJob() {
+      const name = document.getElementById('new-job-name').value.trim();
+      const dateValue = document.getElementById('new-job-date').value;
+
+      // Don't add if either field is empty
+      if (!name || !dateValue) return;
+
+      // Pull the day number out of the date string (format: "2026-06-08")
+      const dayNumber = parseInt(dateValue.split('-')[2]);
+
+      // Add the new job to our list
+      jobs.push({ name: name, day: dayNumber });
+
+      // Clear the form inputs
+      document.getElementById('new-job-name').value = '';
+      hideAddJobForm();
+
+      // Redraw the calendar so the new job appears
+      renderCalendar();
+    }
+
+
+    // ============================================================
+    // NAVIGATION — switching between calendar and job sheet
+    // ============================================================
+
+    function openJob(job) {
+      activeJob = job;
+
+      // Fill in the job title and date at the top of the sheet
+      document.getElementById('job-title-display').textContent = job.name;
+      document.getElementById('job-date-display').textContent = 'June ' + job.day + ', 2026';
+
+      // Always reset all fields to blank first
+      document.getElementById('field-contact').value = '';
+      document.getElementById('field-phone').value = '';
+      document.getElementById('field-address').value = '';
+      document.getElementById('field-crew').value = '';
+
+      // Reset all task checkmarks for a fresh start
+      Object.keys(taskChecked).forEach(key => { taskChecked[key] = false; });
+      toolChecked.fill(false);
+      shopChecked.fill(false);
+      onhandChecked.fill(false);
+      ppeChecked.fill(false);
+
+      // Pre-fill details only for the front door install template
+      if (job.name === 'Front door install') {
+        document.getElementById('field-address').value = 'Pioneer Village';
+        document.getElementById('field-crew').value = '2 people, 4 hours';
+      }
+
+      // Always start on the Tasks tab
+      showTab('tasks');
+
+      // Switch screens
+      document.getElementById('screen-calendar').classList.remove('active');
+      document.getElementById('screen-job').classList.add('active');
+
+      // Render all the tab content
+      renderTaskList();
+      renderToolList();
+      renderShoppingList();
+      renderOnhandList();
+      renderPpeList();
+    }
+
+    function goToCalendar() {
+      document.getElementById('screen-job').classList.remove('active');
+      document.getElementById('screen-calendar').classList.add('active');
+    }
+
+
+    // ============================================================
+    // TABS — shows the selected tab panel, hides the others
+    // ============================================================
+
+    function showTab(tabName) {
+      const tabNames = ['tasks', 'truck', 'shopping'];
+
+      // Update tab button styles
+      document.querySelectorAll('.tab-btn').forEach((btn, index) => {
+        btn.classList.toggle('active', tabNames[index] === tabName);
+      });
+
+      // Show the matching panel, hide the rest
+      tabNames.forEach(name => {
+        const panel = document.getElementById('tab-' + name);
+        panel.classList.toggle('active', name === tabName);
+      });
+    }
+
+
+    // ============================================================
+    // TASK LIST — renders checkboxes grouped by phase
+    // ============================================================
+
+    function renderTaskList() {
+      const container = document.getElementById('task-list');
+      let html = '';
+
+      taskSections.forEach(section => {
+        // Section heading (e.g. "Demo", "Hang the door")
+        html += `<p class="section-heading">${section.title}</p>`;
+
+        section.items.forEach(item => {
+          // Each task has a unique key so we can track it independently
+          const key = section.title + '|' + item;
+
+          // Default to unchecked if we haven't seen this task before
+          if (!(key in taskChecked)) {
+            taskChecked[key] = false;
+          }
+
+          const isDone = taskChecked[key];
+
+          html += `
+            <div class="check-row ${isDone ? 'done' : ''}">
+              <input type="checkbox" ${isDone ? 'checked' : ''}
+                onchange="toggleTask('${key.replace(/'/g, "\\'")}', this)" />
+              <span>${item}</span>
+            </div>
+          `;
+        });
+      });
+
+      container.innerHTML = html;
+    }
+
+    function toggleTask(key, checkbox) {
+      taskChecked[key] = checkbox.checked;
+      // Update just the row's appearance without re-rendering everything
+      const row = checkbox.closest('.check-row');
+      row.classList.toggle('done', checkbox.checked);
+    }
+
+
+    // ============================================================
+    // TOOL LIST — renders the truck-loading checklist
+    // ============================================================
+
+    function renderToolList() {
+      const container = document.getElementById('tool-list');
+
+      container.innerHTML = toolsList.map((tool, index) => `
+        <div class="check-row ${toolChecked[index] ? 'done' : ''}">
+          <input type="checkbox" ${toolChecked[index] ? 'checked' : ''}
+            onchange="toggleTool(${index}, this)" />
+          <span>${tool}</span>
+        </div>
+      `).join('');
+    }
+
+    function toggleTool(index, checkbox) {
+      toolChecked[index] = checkbox.checked;
+      checkbox.closest('.check-row').classList.toggle('done', checkbox.checked);
+    }
+
+
+    // ============================================================
+    // SHOPPING LIST — splits items into "need to buy" and "got it"
+    // ============================================================
+
+    function renderShoppingList() {
+      const container = document.getElementById('shopping-list');
+      const doorCount = parseInt(document.getElementById('door-count').value) || 1;
+
+      // Split items into two groups based on whether they're checked
+      const needToBuy = shoppingItems.filter((item, i) => !shopChecked[i]);
+      const gotIt     = shoppingItems.filter((item, i) =>  shopChecked[i]);
+
+      function buildRow(item) {
+        const index = shoppingItems.indexOf(item);
+        const isDone = shopChecked[index];
+
+        // Show "×3" style quantity for per-unit items when count > 1
+        const qtyLabel = item.perUnit && doorCount > 1 ? `×${doorCount}` : '';
+
+        return `
+          <div class="shop-row ${isDone ? 'done' : ''}">
+            <input type="checkbox" ${isDone ? 'checked' : ''}
+              onchange="toggleShop(${index})" />
+            <span class="item-name">
+              ${item.name}
+              ${item.needsConfirm ? '<span class="confirm-badge">confirm size</span>' : ''}
+            </span>
+            <span class="qty-label">${qtyLabel}</span>
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        <div class="list-section-label">
+          Need to buy
+          <span class="count-pill need">${needToBuy.length}</span>
+        </div>
+        ${needToBuy.length
+          ? needToBuy.map(buildRow).join('')
+          : '<p style="font-size:13px;color:#aaa;padding:8px 0">All picked up!</p>'
+        }
+
+        <div class="list-section-label" style="margin-top: 20px;">
+          Got it
+          <span class="count-pill have">${gotIt.length}</span>
+        </div>
+        ${gotIt.length
+          ? gotIt.map(buildRow).join('')
+          : '<p style="font-size:13px;color:#aaa;padding:8px 0">Nothing checked off yet.</p>'
+        }
+      `;
+    }
+
+    function toggleShop(index) {
+      shopChecked[index] = !shopChecked[index];
+      renderShoppingList();
+    }
+
+
+    // ============================================================
+    // ON HAND LIST — stocked consumables to confirm before leaving
+    // ============================================================
+
+    function renderOnhandList() {
+      const container = document.getElementById('onhand-list');
+
+      container.innerHTML = onhandItems.map((item, index) => `
+        <div class="check-row ${onhandChecked[index] ? 'done' : ''}">
+          <input type="checkbox" ${onhandChecked[index] ? 'checked' : ''}
+            onchange="toggleOnhand(${index}, this)" />
+          <span>${item}</span>
+        </div>
+      `).join('');
+    }
+
+    function toggleOnhand(index, checkbox) {
+      onhandChecked[index] = checkbox.checked;
+      checkbox.closest('.check-row').classList.toggle('done', checkbox.checked);
+    }
+
+
+    // ============================================================
+    // PPE LIST — safety gear to confirm before every job
+    // ============================================================
+
+    function renderPpeList() {
+      const container = document.getElementById('ppe-list');
+
+      container.innerHTML = ppeItems.map((item, index) => `
+        <div class="check-row ${ppeChecked[index] ? 'done' : ''}">
+          <input type="checkbox" ${ppeChecked[index] ? 'checked' : ''}
+            onchange="togglePpe(${index}, this)" />
+          <span>${item}</span>
+        </div>
+      `).join('');
+    }
+
+    function togglePpe(index, checkbox) {
+      ppeChecked[index] = checkbox.checked;
+      checkbox.closest('.check-row').classList.toggle('done', checkbox.checked);
+    }
+
+
+    // ============================================================
+    // STARTUP — draw the calendar when the page loads
+    // ============================================================
+    renderCalendar();
+
+  </script>
+</body>
+</html>
